@@ -99,8 +99,12 @@ export async function POST(req: Request) {
     });
 
     console.log("✅ Stripe session created:", session.id);
+    console.log("🔗 Checkout URL:", session.url);
 
-    return NextResponse.json({ sessionId: session.id });
+    return NextResponse.json({ 
+      sessionId: session.id,
+      url: session.url 
+    });
   } catch (error) {
     console.error("❌ Checkout error:", error);
     return NextResponse.json(

@@ -148,23 +148,17 @@ export default function BuyTokensPage() {
         throw new Error(error.error || "Erreur lors de la création de la session de paiement");
       }
 
-      const { sessionId } = await response.json();
-      console.log("✅ Session ID received:", sessionId);
+      const { url } = await response.json();
+      console.log("✅ Checkout URL received:", url);
 
-      // Redirect to Stripe Checkout
-      console.log("💳 Loading Stripe...");
-      const stripe = await stripePromise;
-      if (!stripe) {
-        console.error("❌ Stripe not initialized");
-        throw new Error("Stripe n'a pas pu être initialisé. Vérifiez votre configuration.");
+      if (!url) {
+        console.error("❌ No checkout URL received");
+        throw new Error("URL de paiement non reçue");
       }
       
-      console.log("✅ Stripe loaded, redirecting to checkout...");
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      if (error) {
-        console.error("❌ Stripe redirect error:", error);
-        throw new Error(error.message);
-      }
+      // Redirect to Stripe Checkout
+      console.log("💳 Redirecting to Stripe checkout...");
+      window.location.href = url;
     } catch (error) {
       console.error("Purchase error:", error);
       setMessage({
