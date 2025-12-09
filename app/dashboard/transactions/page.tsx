@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
-import { Loader2, Plus, Eye } from "lucide-react";
+import { Loader2, Plus, Eye, Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -72,6 +72,7 @@ export default function TransactionsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [userCompanyId, setUserCompanyId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const createForm = useForm<CreateTransactionInput>({
     resolver: zodResolver(createTransactionSchema),
@@ -159,6 +160,14 @@ export default function TransactionsPage() {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
   }
+
+  const filteredTransactions = transactions.filter(transaction => 
+    transaction.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    transaction.company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    transaction.company.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (transaction.package?.name && transaction.package.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (transaction.description && transaction.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   function getStatusBadgeVariant(status: string) {
     switch (status) {
@@ -337,17 +346,32 @@ export default function TransactionsPage() {
         </Alert>
       )}
 
+      <div className="flex items-center gap-4 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            type="text"
+            placeholder="Rechercher par ID, entreprise, forfait..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Liste des transactions</CardTitle>
           <CardDescription>
-            {transactions.length} transaction{transactions.length > 1 ? "s" : ""} enregistrée{transactions.length > 1 ? "s" : ""}
+            {filteredTransactions.length} transaction{filteredTransactions.length > 1 ? "s" : ""} trouvée{filteredTransactions.length > 1 ? "s" : ""}
+            {searchQuery && ` (sur ${transactions.length} total)`}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>ID Transaction</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Entreprise</TableHead>
                 <TableHead>Type</TableHead>
@@ -358,15 +382,18 @@ export default function TransactionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.length === 0 ? (
+              {filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    Aucune transaction trouvée
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                    {searchQuery ? "Aucune transaction ne correspond à votre recherche" : "Aucune transaction trouvée"}
                   </TableCell>
                 </TableRow>
               ) : (
-                transactions.map((transaction) => (
+                filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {transaction.id.substring(0, 8)}...
+                    </TableCell>
                     <TableCell>
                       {format(new Date(transaction.createdAt), "dd/MM/yyyy HH:mm")}
                     </TableCell>

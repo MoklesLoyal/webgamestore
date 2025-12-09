@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Edit, Trash2, Building2, Coins } from "lucide-react";
+import { Plus, Edit, Trash2, Building2, Coins, Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createCompanySchema, updateCompanySchema } from "@/lib/validations";
@@ -40,6 +40,7 @@ export default function CompaniesPage() {
   const [tokenAmount, setTokenAmount] = useState<number>(0);
   const [tokenReason, setTokenReason] = useState<string>("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const createForm = useForm<CreateCompanyInput>({
     resolver: zodResolver(createCompanySchema),
@@ -201,6 +202,11 @@ export default function CompaniesPage() {
     );
   }
 
+  const filteredCompanies = companies.filter(company => 
+    company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    company.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -283,11 +289,25 @@ export default function CompaniesPage() {
         </Alert>
       )}
 
+      <div className="flex items-center gap-4 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            type="text"
+            placeholder="Rechercher par nom ou email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Liste des entreprises</CardTitle>
           <CardDescription>
-            {companies.length} entreprise{companies.length > 1 ? "s" : ""} enregistrée{companies.length > 1 ? "s" : ""}
+            {filteredCompanies.length} entreprise{filteredCompanies.length > 1 ? "s" : ""} trouvée{filteredCompanies.length > 1 ? "s" : ""}
+            {searchQuery && ` (sur ${companies.length} total)`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -303,14 +323,14 @@ export default function CompaniesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {companies.length === 0 ? (
+              {filteredCompanies.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Aucune entreprise trouvée
+                    {searchQuery ? "Aucune entreprise ne correspond à votre recherche" : "Aucune entreprise trouvée"}
                   </TableCell>
                 </TableRow>
               ) : (
-                companies.map((company) => (
+                filteredCompanies.map((company) => (
                   <TableRow key={company.id}>
                     <TableCell className="font-medium">{company.name}</TableCell>
                     <TableCell>{company.email}</TableCell>
