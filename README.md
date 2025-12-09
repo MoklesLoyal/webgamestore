@@ -60,6 +60,11 @@ NEXT_PUBLIC_STACK_PROJECT_ID="your_stack_project_id"
 NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY="your_stack_publishable_key"
 STACK_SECRET_SERVER_KEY="your_stack_secret_key"
 
+# Stripe (https://stripe.com/)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NODE_ENV="development"
@@ -78,6 +83,21 @@ NODE_ENV="development"
    - Sign In URL: `http://localhost:3000/sign-in`
    - After Sign In: `http://localhost:3000/dashboard`
    - After Sign Out: `http://localhost:3000`
+
+#### Configuration de Stripe
+1. Créez un compte sur [Stripe](https://stripe.com/)
+2. Récupérez vos clés de test (commençant par `pk_test_` et `sk_test_`)
+3. Configurez un webhook pointant vers : `http://localhost:3000/api/webhooks/stripe`
+4. Sélectionnez les événements suivants dans le webhook :
+   - `checkout.session.completed`
+   - `payment_intent.succeeded`
+5. Copiez le secret du webhook (`whsec_...`) dans `STRIPE_WEBHOOK_SECRET`
+
+**Tester les webhooks en local avec Stripe CLI :**
+```bash
+# Installer Stripe CLI : https://stripe.com/docs/stripe-cli
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
 
 ### 4. Configuration de la base de données
 
@@ -106,11 +126,14 @@ L'application sera accessible sur [http://localhost:3000](http://localhost:3000)
 webgamestore/
 ├── app/
 │   ├── api/                    # API Routes REST
-│   │   ├── companies/         # CRUD Entreprises
+│   │   ├── checkout/          # Stripe Checkout
+│   │   ├── companies/         # CRUD Entreprises + Tokens Management
 │   │   ├── packages/          # CRUD Forfaits
 │   │   ├── transactions/      # CRUD Transactions
-│   │   └── users/             # CRUD Utilisateurs
+│   │   ├── users/             # CRUD Utilisateurs
+│   │   └── webhooks/stripe/   # Webhooks Stripe
 │   ├── dashboard/             # Pages du tableau de bord
+│   │   ├── buy-tokens/        # Page d'achat de tokens avec Stripe
 │   │   ├── companies/         # Gestion entreprises
 │   │   ├── packages/          # Gestion forfaits
 │   │   ├── transactions/      # Gestion transactions
@@ -123,6 +146,7 @@ webgamestore/
 ├── lib/
 │   ├── prisma.ts             # Client Prisma
 │   ├── stack.ts              # Configuration Stack Auth
+│   ├── stripe.ts             # Client Stripe
 │   └── validations.ts        # Schémas de validation Zod
 ├── prisma/
 │   └── schema.prisma         # Schéma de base de données
@@ -135,6 +159,12 @@ webgamestore/
 - **Company** ↔ **Transaction** (une entreprise a plusieurs transactions)
 - **Package** ↔ **Transaction** (un forfait peut être utilisé dans plusieurs transactions)
 - **User** ↔ **Company** (utilisateurs appartiennent à une entreprise)
+
+### ✅ Intégration Stripe pour les paiements
+- Page d'achat de tokens (`/dashboard/buy-tokens`)
+- Checkout sécurisé avec Stripe
+- Webhooks pour la confirmation des paiements
+- Historique des transactions de paiement
 
 ### ✅ CRUD Complet
 Toutes les entités principales disposent d'un CRUD complet :

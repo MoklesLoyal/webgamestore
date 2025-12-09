@@ -63,7 +63,7 @@ export async function PATCH(
     const validatedData = updateUserSchema.parse(body)
 
     const existingUser = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!existingUser) {
