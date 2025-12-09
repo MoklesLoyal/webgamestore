@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import StackAuthProvider from "@/components/providers/stack-auth-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
         <StackAuthProvider>
           {children}
         </StackAuthProvider>
+        <Toaster />
       </body>
     </html>
   );
