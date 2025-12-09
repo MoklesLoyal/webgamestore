@@ -1,3 +1,9 @@
+
+# Admin LogIn
+``admin@admin.com``
+``college514``
+
+
 # WebGameStore - Plateforme de Gestion de Tokens de Transcription
 
 Une application web moderne pour la gestion de tokens de transcription pour livestreams et vidéos, avec support du paiement à l'utilisation et des forfaits.

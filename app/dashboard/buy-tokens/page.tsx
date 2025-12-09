@@ -8,14 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check, Loader2, CreditCard, Coins, AlertCircle } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
-
-// Initialize Stripe with the publishable key
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-if (!stripePublishableKey) {
-  console.error("Stripe publishable key is missing. Please check your .env file.");
-}
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface Package {
   id: string;
@@ -51,17 +43,6 @@ export default function BuyTokensPage() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    // Verify Stripe configuration on mount
-    if (!stripePublishableKey) {
-      console.error("❌ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not defined");
-      setMessage({
-        type: "error",
-        text: "Configuration Stripe manquante. Veuillez vérifier les variables d'environnement."
-      });
-    } else {
-      console.log("✅ Stripe key loaded:", stripePublishableKey.substring(0, 20) + "...");
-    }
-
     fetchData();
 
     // Check for success/cancel params from Stripe redirect
@@ -113,7 +94,6 @@ export default function BuyTokensPage() {
   const handlePurchase = async (packageId: string) => {
     console.log("🛒 Purchase initiated for package:", packageId);
     console.log("👤 User data:", userData);
-    console.log("🔑 Stripe key available:", !!stripePublishableKey);
     
     if (!userData?.companyId) {
       console.error("❌ No company ID found");

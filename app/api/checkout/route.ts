@@ -101,6 +101,20 @@ export async function POST(req: Request) {
     console.log("✅ Stripe session created:", session.id);
     console.log("🔗 Checkout URL:", session.url);
 
+    // Update transaction with Stripe session ID
+    await prisma.transaction.update({
+      where: { id: transaction.id },
+      data: {
+        metadata: {
+          packageName: packageData.name,
+          packageType: packageData.type,
+          stripeSessionId: session.id,
+        },
+      },
+    });
+
+    console.log("💾 Transaction updated with session ID");
+
     return NextResponse.json({ 
       sessionId: session.id,
       url: session.url 

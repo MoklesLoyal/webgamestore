@@ -30,13 +30,26 @@ export async function POST(req: Request) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         
+        console.log("🔔 Checkout session completed:", session.id);
+        console.log("💳 Payment status:", session.payment_status);
+        
         if (session.payment_status === "paid") {
           const { transactionId, companyId, tokensAmount } = session.metadata || {};
 
+          console.log("📊 Metadata:", { transactionId, companyId, tokensAmount });
+
           if (!transactionId || !companyId || !tokensAmount) {
-            console.error("Missing metadata in checkout session");
+            console.error("❌ Missing metadata in checkout session");
             break;
           }
+
+          // Get current company balance
+          const companyBefore = await prisma.company.findUnique({
+            where: { id: companyId },
+            select: { tokenBalance: true, name: true },
+          });
+
+          console.log("🏢 Company before:", companyBefore);
 
           // Update transaction status
           await prisma.transaction.update({
@@ -51,17 +64,22 @@ export async function POST(req: Request) {
             },
           });
 
+          console.log("✅ Transaction updated to COMPLETED");
+
           // Add tokens to company balance
-          await prisma.company.update({
+          const updatedCompany = await prisma.company.update({
             where: { id: companyId },
             data: {
               tokenBalance: {
                 increment: parseInt(tokensAmount),
               },
             },
+            select: { tokenBalance: true, name: true },
           });
 
-          console.log(`Successfully added ${tokensAmount} tokens to company ${companyId}`);
+          console.log("🏢 Company after:", updatedCompany);
+          console.log(`✅ Successfully added ${tokensAmount} tokens to company ${companyBefore?.name}`);
+          console.log(`💰 Balance: ${companyBefore?.tokenBalance} -> ${updatedCompany.tokenBalance}`);
         }
         break;
       }
