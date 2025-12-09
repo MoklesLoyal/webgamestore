@@ -48,14 +48,11 @@ export default function BuyTokensPage() {
     // Check for success/cancel params from Stripe redirect
     const success = searchParams?.get("success");
     const canceled = searchParams?.get("canceled");
+    const sessionId = searchParams?.get("session_id");
 
-    if (success === "true") {
-      setMessage({ 
-        type: "success", 
-        text: "Paiement réussi ! Vos tokens ont été ajoutés à votre compte." 
-      });
-      // Clear the URL params
-      window.history.replaceState({}, "", "/dashboard/buy-tokens");
+    if (success === "true" && sessionId) {
+      // Verify and complete the payment
+      verifyPayment(sessionId);
     } else if (canceled === "true") {
       setMessage({ 
         type: "error", 
@@ -65,6 +62,43 @@ export default function BuyTokensPage() {
       window.history.replaceState({}, "", "/dashboard/buy-tokens");
     }
   }, [searchParams]);
+
+  const verifyPayment = async (sessionId: string) => {
+    try {
+      const response = await fetch("/api/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ 
+          type: "success", 
+          text: data.alreadyProcessed 
+            ? "Paiement déjà traité. Vos tokens sont disponibles."
+            : `Paiement réussi ! ${data.transaction?.tokensAdded || 0} tokens ajoutés à votre compte.` 
+        });
+        // Refresh data to show updated balance
+        fetchData();
+      } else {
+        setMessage({ 
+          type: "error", 
+          text: "Erreur lors de la vérification du paiement. Contactez le support si le problème persiste." 
+        });
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      setMessage({ 
+        type: "error", 
+        text: "Erreur lors de la vérification du paiement." 
+      });
+    } finally {
+      // Clear the URL params
+      window.history.replaceState({}, "", "/dashboard/buy-tokens");
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -152,28 +186,31 @@ export default function BuyTokensPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Acheter des Tokens</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Acheter des Tokens</h1>
+          <p className="text-slate-600 mt-2">
             Choisissez un forfait de tokens pour votre entreprise
           </p>
         </div>
         {userData?.company && (
-          <Card>
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-50 to-yellow-50">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <Coins className="w-8 h-8 text-yellow-500" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center shadow-lg">
+                  <Coins className="w-6 h-6 text-white" />
+                </div>
                 <div>
-                  <p className="text-sm text-gray-600">Solde actuel</p>
-                  <p className="text-2xl font-bold">{userData.company.tokenBalance} tokens</p>
+                  <p className="text-sm text-slate-600 font-medium">Solde actuel</p>
+                  <p className="text-2xl font-bold text-slate-900">{userData.company.tokenBalance.toLocaleString()}</p>
+                  <p className="text-xs text-slate-500">tokens disponibles</p>
                 </div>
               </div>
             </CardContent>
@@ -182,9 +219,9 @@ export default function BuyTokensPage() {
       </div>
 
       {!userData?.companyId && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
+        <Alert className="bg-amber-50 border-amber-200">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
             Vous devez être associé à une entreprise pour acheter des tokens. 
             Veuillez contacter un administrateur.
           </AlertDescription>
@@ -192,7 +229,7 @@ export default function BuyTokensPage() {
       )}
 
       {message && (
-        <Alert variant={message.type === "error" ? "destructive" : "default"}>
+        <Alert variant={message.type === "error" ? "destructive" : "default"} className="shadow-lg">
           <AlertDescription>{message.text}</AlertDescription>
         </Alert>
       )}
@@ -204,38 +241,48 @@ export default function BuyTokensPage() {
           return (
             <Card 
               key={pkg.id} 
-              className={`relative ${isPopular ? "border-2 border-blue-500 shadow-lg" : ""}`}
+              className={`relative border-0 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 ${
+                isPopular 
+                  ? "bg-gradient-to-br from-blue-50 to-indigo-50 ring-2 ring-blue-500" 
+                  : "bg-white"
+              }`}
             >
               {isPopular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-blue-500 text-white">Populaire</Badge>
+                  <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg px-4">
+                    ⭐ Populaire
+                  </Badge>
                 </div>
               )}
               
-              <CardHeader>
-                <CardTitle className="text-2xl">{pkg.name}</CardTitle>
-                <CardDescription>{pkg.description}</CardDescription>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl text-slate-900">{pkg.name}</CardTitle>
+                <CardDescription className="text-slate-600">{pkg.description}</CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-6">
-                <div className="text-center">
-                  <div className="flex items-baseline justify-center gap-2">
-                    <span className="text-4xl font-bold">{pkg.price}$</span>
+                <div className="text-center py-4">
+                  <div className="flex items-baseline justify-center gap-2 mb-2">
+                    <span className="text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">{pkg.price}$</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {pkg.tokensAmount} tokens
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    ({(pkg.price / pkg.tokensAmount).toFixed(3)}$ par token)
+                  <div className="inline-block bg-teal-100 text-teal-700 px-4 py-2 rounded-full mb-2">
+                    <p className="text-lg font-semibold">
+                      {pkg.tokensAmount.toLocaleString()} tokens
+                    </p>
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    {(pkg.price / pkg.tokensAmount).toFixed(3)}$ par token
                   </p>
                 </div>
 
                 {pkg.features && pkg.features.length > 0 && (
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {pkg.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">{feature}</span>
+                      <li key={index} className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-emerald-600" />
+                        </div>
+                        <span className="text-sm text-slate-700">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -246,13 +293,17 @@ export default function BuyTokensPage() {
                 <Button
                   onClick={() => handlePurchase(pkg.id)}
                   disabled={!userData?.companyId || purchasing === pkg.id}
-                  className="w-full"
+                  className={`w-full shadow-lg ${
+                    isPopular
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      : "bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900"
+                  }`}
                   size="lg"
                 >
                   {purchasing === pkg.id ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Traitement...
+                      Traitement en cours...
                     </>
                   ) : (
                     <>
@@ -268,34 +319,45 @@ export default function BuyTokensPage() {
       </div>
 
       {packages.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-gray-600">Aucun forfait disponible pour le moment</p>
+        <Card className="border-0 shadow-xl">
+          <CardContent className="py-16 text-center">
+            <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+            <p className="text-slate-600 text-lg">Aucun forfait disponible pour le moment</p>
           </CardContent>
         </Card>
       )}
 
-      <div className="mt-8 p-6 bg-blue-50 rounded-lg">
-        <h3 className="font-semibold text-lg mb-3">Informations importantes</h3>
-        <ul className="space-y-2 text-sm text-gray-700">
-          <li className="flex items-start gap-2">
-            <Check className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <span>Les tokens sont crédités instantanément après le paiement</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <span>Les tokens sont partagés avec tous les membres de votre entreprise</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <span>Paiement sécurisé via Stripe</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <span>Les tokens n&apos;expirent pas</span>
-          </li>
-        </ul>
-      </div>
+      <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50">
+        <CardContent className="p-6">
+          <h3 className="font-semibold text-xl mb-4 text-slate-900">💎 Informations importantes</h3>
+          <ul className="space-y-3 text-sm text-slate-700">
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-4 h-4 text-blue-600" />
+              </div>
+              <span>Les tokens sont crédités <strong>instantanément</strong> après le paiement</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-4 h-4 text-blue-600" />
+              </div>
+              <span>Les tokens sont partagés avec <strong>tous les membres</strong> de votre entreprise</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-4 h-4 text-blue-600" />
+              </div>
+              <span>Paiement <strong>100% sécurisé</strong> via Stripe</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-4 h-4 text-blue-600" />
+              </div>
+              <span>Les tokens <strong>n&apos;expirent jamais</strong></span>
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -4,7 +4,7 @@
 ``college514``
 
 
-# WebGameStore - Plateforme de Gestion de Tokens de Transcription
+# TokenShopSimulator - Plateforme de Gestion de Tokens de Transcription
 
 Une application web moderne pour la gestion de tokens de transcription pour livestreams et vidéos, avec support du paiement à l'utilisation et des forfaits.
 
@@ -45,7 +45,7 @@ Une application web moderne pour la gestion de tokens de transcription pour live
 
 ### 1. Cloner le projet
 ```bash
-cd webgamestore
+cd TokenShopSimulator
 ```
 
 ### 2. Installer les dépendances
@@ -129,7 +129,7 @@ L'application sera accessible sur [http://localhost:3000](http://localhost:3000)
 ## 📁 Structure du Projet
 
 ```
-webgamestore/
+TokenShopSimulator/
 ├── app/
 │   ├── api/                    # API Routes REST
 │   │   ├── checkout/          # Stripe Checkout

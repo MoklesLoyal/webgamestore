@@ -34,35 +34,47 @@ enum TransactionStatus {
   CANCELLED
 }
 
+enum RequestType {
+  CREATE_COMPANY
+  JOIN_COMPANY
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  role          UserRole  @default(USER)
-  stackAuthId   String?   @unique
-  companyId     String?
-  company       Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  lastActiveAt  DateTime  @default(now())
-  isActive      Boolean   @default(true)
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  name               String?
+  role               UserRole            @default(USER)
+  stackAuthId        String?             @unique
+  companyId          String?
+  company            Company?            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  enterpriseRequests EnterpriseRequest[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  lastActiveAt       DateTime            @default(now())
+  isActive           Boolean             @default(true)
 
   @@index([email])
   @@index([companyId])
   @@index([stackAuthId])
 }
-
 model Company {
-  id            String        @id @default(cuid())
-  name          String
-  email         String        @unique
-  phone         String?
-  address       String?
-  tokenBalance  Int           @default(0)
-  users         User[]
-  transactions  Transaction[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  phone              String?
+  address            String?
+  tokenBalance       Int                 @default(0)
+  users              User[]
+  transactions       Transaction[]
+  enterpriseRequests EnterpriseRequest[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([email])
 }
@@ -100,8 +112,30 @@ model Transaction {
   updatedAt     DateTime          @updatedAt
 
   @@index([companyId])
-  @@index([packageId])
   @@index([type])
   @@index([status])
   @@index([createdAt])
+}
+
+model EnterpriseRequest {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            RequestType
+  status          RequestStatus @default(PENDING)
+  companyName     String?
+  companyEmail    String?
+  companyPhone    String?
+  companyAddress  String?
+  targetCompanyId String?
+  targetCompany   Company?      @relation(fields: [targetCompanyId], references: [id], onDelete: SetNull)
+  message         String?
+  adminResponse   String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  processedAt     DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
 }

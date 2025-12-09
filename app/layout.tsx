@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WebGameStore - Gestion de Tokens de Transcription",
+  title: "TokenShopSimulator - Gestion de Tokens de Transcription",
   description: "Plateforme de gestion de tokens de transcription pour livestreams et vidéos",
 };
 

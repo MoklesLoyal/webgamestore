@@ -172,7 +172,7 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Bienvenue sur WebGameStore</CardTitle>
+          <CardTitle>Bienvenue sur TokenShopSimulator</CardTitle>
           <CardDescription>
             Gérez vos entreprises, forfaits et transactions depuis ce tableau de bord
           </CardDescription>

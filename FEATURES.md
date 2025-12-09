@@ -1,4 +1,4 @@
-# Liste des Fonctionnalités - WebGameStore
+# Liste des Fonctionnalités - TokenShopSimulator
 
 Ce document liste toutes les fonctionnalités implémentées conformément aux exigences du projet.
 
