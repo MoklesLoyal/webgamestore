@@ -251,13 +251,13 @@ export default function UsersPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="companyId">Entreprise</Label>
                   <Select
-                    onValueChange={(value) => createForm.setValue("companyId", value)}
+                    onValueChange={(value) => createForm.setValue("companyId", value === "none" ? "" : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionnez une entreprise" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Aucune</SelectItem>
+                      <SelectItem value="none">Aucune</SelectItem>
                       {companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>
                           {company.name}
@@ -398,6 +398,26 @@ export default function UsersPage() {
                     <SelectItem value="USER">Utilisateur</SelectItem>
                     <SelectItem value="COMPANY">Entreprise</SelectItem>
                     <SelectItem value="ADMIN">Administrateur</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-companyId">Entreprise</Label>
+                <Select
+                  onValueChange={(value) => editForm.setValue("companyId", value === "none" ? "" : value)}
+                  defaultValue={selectedUser?.companyId || "none"}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez une entreprise" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucune</SelectItem>
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
